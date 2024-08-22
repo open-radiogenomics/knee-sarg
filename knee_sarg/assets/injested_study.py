@@ -1,6 +1,6 @@
 """Injest staged study data into a collection's archive.
 
-Staged study data can either come from the IDC or from the web browser portal.
+Staged study data can either come from the OAI or from the web browser portal.
 """
 
 import os

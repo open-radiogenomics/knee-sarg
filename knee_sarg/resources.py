@@ -28,12 +28,12 @@ INJESTED_DIR = DATA_DIR / "injested"
 COLLECTIONS_DIR = DATA_DIR / "collections"
 DATABASE_PATH = os.getenv("DATABASE_PATH", str(DATA_DIR / "database.duckdb"))
 
-NSCLC_RADIOGENOMICS_COLLECTION_NAME = "nsclc_radiogenomics"
+OAI_COLLECTION_NAME = "oai"
 
 collection_table_names = {"patients", "studies", "series"}
 class CollectionTables(ConfigurableResource):
     duckdb: DuckDBResource
-    collection_names: List[str] = [NSCLC_RADIOGENOMICS_COLLECTION_NAME]
+    collection_names: List[str] = [OAI_COLLECTION_NAME]
 
     def setup_for_execution(self, context: InitResourceContext) -> None:
         os.makedirs(COLLECTIONS_DIR, exist_ok=True)
@@ -81,22 +81,22 @@ class CollectionTables(ConfigurableResource):
         with self._db.get_connection() as conn:
             conn.execute(f"INSERT INTO {collection_name}_{table_name} SELECT * FROM df")
 
-class IDCNSCLCRadiogenomicSampler(ConfigurableResource):
+class OAISampler(ConfigurableResource):
     n_samples: int = 1
 
     def get_samples(self) -> pl.DataFrame:
-        manifest_path = DATA_DIR / "idc-nsclc-radiogenomics-sampler"
-        patients_path = manifest_path / 'NSCLCR01Radiogenomic_DATA_LABELS_2018-05-22_1500-shifted.csv'
+        manifest_path = DATA_DIR / "oai-sampler"
+        patients_path = manifest_path / 'OAIR01Radiogenomic_DATA_LABELS_2018-05-22_1500-shifted.csv'
         patients_table = pl.from_arrow(read_csv(patients_path))
 
         samples = patients_table.sample(self.n_samples)
 
-        images_manifest_path = manifest_path / 'idc_manifest_full_table.csv'
+        images_manifest_path = manifest_path / 'oai_manifest_full_table.csv'
         images_table = read_csv(images_manifest_path).to_pandas()
 
         for row in samples.iter_rows(named=True):
             log.info(f"Fetching images for patient {row['Patient ID']}")
-            output_path = PRE_STAGED_DIR / NSCLC_RADIOGENOMICS_COLLECTION_NAME / row['Patient ID']
+            output_path = PRE_STAGED_DIR / OAI_RADIOGENOMICS_COLLECTION_NAME / row['Patient ID']
 
             if output_path.exists():
                 log.info(f"Patient {row['Patient ID']} already exists")
@@ -122,7 +122,7 @@ class IDCNSCLCRadiogenomicSampler(ConfigurableResource):
                     "--endpoint-url",
                     "https://s3.amazonaws.com",
                     "cp",
-                    f"s3://idc-open-data/{ds.crdc_series_uuid}/*",
+                    f"s3://oai-open-data/{ds.crdc_series_uuid}/*",
                     "."]
                 subprocess.check_call(command, cwd=dicom_path, stdout=subprocess.DEVNULL)
 

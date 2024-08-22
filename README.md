@@ -71,7 +71,7 @@ pixi run dev
 
 In the Dagster UI, click
 
- > *Overview* -> *Jobs* -> *stage_idc_nsclc_radiogenomic_samples* -> *Materialize all*
+ > *Overview* -> *Jobs* -> *stage_oai_nsclc_radiogenomic_samples* -> *Materialize all*
 
 ![Materialize staging of samples](./docs/figures/knee-sarg-stage.png)
 
