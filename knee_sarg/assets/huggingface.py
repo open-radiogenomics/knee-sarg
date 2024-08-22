@@ -14,10 +14,10 @@ def create_hf_asset(collection_name: str, collection_description: str):
 ---
 license: mit
 ---
-# Lung-SARG {collection_name} collection
+# Knee-SARG {collection_name} collection
 
-[Lung-SARG](https://github.com/open-radiogenomics/lung-sarg) is a fully open-source and local-first platform
-that improves how communities collaborate on open data to diagnose lung cancer and perform epidemiology
+[Knee-SARG](https://github.com/open-radiogenomics/knee-sarg) is a fully open-source and local-first platform
+that improves how communities collaborate on open data to diagnose knee cancer and perform epidemiology
 on local populations in low and middle income countries.
 
 {collection_description}
@@ -38,7 +38,7 @@ collections = [
 
 Source: https://www.cancerimagingarchive.net/collection/nsclc-radiogenomics/
 
-> Medical image biomarkers of cancer promise improvements in patient care through advances in precision medicine. Compared to genomic biomarkers, image biomarkers provide the advantages of being a non-invasive procedure, and characterizing a heterogeneous tumor in its entirety, as opposed to limited tissue available for biopsy. We developed a unique radiogenomic dataset from a Non-Small Cell Lung Cancer (NSCLC) cohort of 211 subjects. The dataset comprises Computed Tomography (CT), Positron Emission Tomography (PET)/CT images, semantic annotations of the tumors as observed on the medical images using a controlled vocabulary, segmentation maps of tumors in the CT scans, and quantitative values obtained from the PET/CT scans. Imaging data are also paired with gene mutation, RNA sequencing data from samples of surgically excised tumor tissue, and clinical data, including survival outcomes. This dataset was created to facilitate the discovery of the underlying relationship between genomic and medical image features, as well as the development and evaluation of prognostic medical image biomarkers.
+> Medical image biomarkers of cancer promise improvements in patient care through advances in precision medicine. Compared to genomic biomarkers, image biomarkers provide the advantages of being a non-invasive procedure, and characterizing a heterogeneous tumor in its entirety, as opposed to limited tissue available for biopsy. We developed a unique radiogenomic dataset from a Non-Small Cell Knee Cancer (NSCLC) cohort of 211 subjects. The dataset comprises Computed Tomography (CT), Positron Emission Tomography (PET)/CT images, semantic annotations of the tumors as observed on the medical images using a controlled vocabulary, segmentation maps of tumors in the CT scans, and quantitative values obtained from the PET/CT scans. Imaging data are also paired with gene mutation, RNA sequencing data from samples of surgically excised tumor tissue, and clinical data, including survival outcomes. This dataset was created to facilitate the discovery of the underlying relationship between genomic and medical image features, as well as the development and evaluation of prognostic medical image biomarkers.
 
 > Further details regarding this data-set may be found in Bakr, et. al, Sci Data. 2018 Oct 16;5:180202. doi: 10.1038/sdata.2018.202, https://www.ncbi.nlm.nih.gov/pubmed/30325352.
 

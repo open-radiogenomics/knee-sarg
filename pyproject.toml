@@ -1,5 +1,5 @@
 [project]
-name = "lung-sarg"
+name = "knee-sarg"
 version = "1.0.0"
 authors = [{ name = "Matt McCormick" }]
 dependencies = [
@@ -25,10 +25,10 @@ readme = "README.md"
 license = { text = "MIT" }
 
 [project.urls]
-Homepage = "https://radiogenomics.github.io/lung-sarg/"
-Changelog = "https://github.com/open-radiogenomics/lung-sarg/commits/main/"
-Issues = "https://github.com/open-radiogenomics/lung-sarg/issues"
-CI = "https://github.com/open-radiogenomics/lung-sarg/actions"
+Homepage = "https://radiogenomics.github.io/knee-sarg/"
+Changelog = "https://github.com/open-radiogenomics/knee-sarg/commits/main/"
+Issues = "https://github.com/open-radiogenomics/knee-sarg/issues"
+CI = "https://github.com/open-radiogenomics/knee-sarg/actions"
 
 [project.optional-dependencies]
 dev = ["dagster-webserver==1.7.16", "ruff"]
@@ -38,13 +38,13 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["lung_sarg"]
+packages = ["knee_sarg"]
 
 [tool.setuptools.package-data]
-"lung_sarg" = ["../dbt/**"]
+"knee_sarg" = ["../dbt/**"]
 
 [tool.dagster]
-module_name = "lung_sarg"
+module_name = "knee_sarg"
 
 [tool.ruff.lint.isort]
 case-sensitive = true
@@ -56,14 +56,14 @@ channels = ["conda-forge"]
 platforms = ["win-64", "linux-64"]
 
 [tool.pixi.pypi-dependencies]
-lung-sarg = { path = ".", editable = true }
+knee-sarg = { path = ".", editable = true }
 
 [tool.pixi.environments]
 default = { solve-group = "default" }
 dev = { features = ["dev"], solve-group = "default" }
 
 [tool.pixi.tasks]
-stage-samples = { cmd = "dagster job execute -j stage_idc_nsclc_radiogenomic_samples -m lung_sarg", description = "Stage IDC NSCLC Radiogenomic Samples" }
+stage-samples = { cmd = "dagster job execute -j stage_idc_nsclc_radiogenomic_samples -m knee_sarg", description = "Stage IDC NSCLC Radiogenomic Samples" }
 clean = { cmd = "rm -rf data/*.parquet data/*.duckdb dbt/target dbt/dbt_packages dbt/logs", description = "Clean the project artifacts" }
 
 [tool.pixi.feature.dev.tasks]

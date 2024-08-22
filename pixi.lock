@@ -2778,7 +2778,7 @@ packages:
   - pytest>4.0 ; extra == 'test'
   - pyzmq ; extra == 'zmq'
 - kind: pypi
-  name: lung-sarg
+  name: knee-sarg
   version: 1.0.0
   path: .
   sha256: 6c4459849de5a17fccba6b7e5f4e2f55f096207b0755e7d459ac6183bc739e58

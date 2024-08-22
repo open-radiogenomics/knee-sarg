@@ -170,7 +170,7 @@ class CollectionPublisher(ConfigurableResource):
             # Note: the repository has to be already created
             self._api.upload_folder(
                 folder_path=temp_dir,
-                repo_id=f"radiogenomics/lung_sarg_{collection_name}",
+                repo_id=f"radiogenomics/knee_sarg_{collection_name}",
                 repo_type="dataset",
                 commit_message=f"Update {collection_name} collection",
             )
