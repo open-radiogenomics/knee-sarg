@@ -15,7 +15,7 @@ injest_and_analyze_study_job = define_asset_job(
     description="Injest a study into a collection and run analysis on it",
 )
 
-@sensor(job=injest_and_analyze_study_job, default_status=DefaultSensorStatus.RUNNING)
+@sensor(job=injest_and_analyze_study_job, default_status=DefaultSensorStatus.STOPPED)
 def staged_study_sensor(context):
     """
     Sensor that triggers when a study is staged.

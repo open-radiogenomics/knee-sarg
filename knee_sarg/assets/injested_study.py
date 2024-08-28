@@ -30,8 +30,8 @@ class StagedStudyConfig(Config):
 def config_to_dataframe(config: StagedStudyConfig) -> pd.DataFrame:
     return pl.from_pandas(pd.DataFrame([config]))
 
-def clean_column_name(name: str) -> str:
-    return slugify(name.replace('%', 'percent'), separator='_')
+def clean_column_name(name: str | int) -> str:
+    return slugify(str(name).replace('%', 'percent'), separator='_')
 
 def convert_date_columns(df: pd.DataFrame) -> pd.DataFrame:
     """

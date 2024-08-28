@@ -86,4 +86,3 @@ This project started after [thinking about what an Open Data Protocol could look
 
 - This project was built on the principles espoused by David Gasquez at [Datonic](https://datonic.io). It is built on the approach in the [Datadex](https://datadex.datonic.io/) Open Data Platform and extended for scientific imaging data with [OME-Zarr](https://ngff.openmicroscopy.org/) and the DICOM-based image data model in the [NIH Imaging Data Commons](https://portal.imaging.datacommons.cancer.gov/).
 - Knee-SARG is possible thanks to amazing open source projects like [DuckDB](https://www.duckdb.org/), [dbt](https://getdbt.com), [Dagster](https://dagster.io/), [ITK](https://docs.itk.org) and many others...
-- This project was built with support from Dr. James Gee in collaboration with the [UPenn PICSL Lab](https://picsl.upenn.edu/).

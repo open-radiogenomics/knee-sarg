@@ -113,7 +113,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/24/1f/af976383b0b772dd351210af5b60ff9927e3abb2f4a103e93da19a957da0/multidict-6.0.5-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/0a/7d/a988f258104dcd2ccf1ed40fdc97e26c4ac351eeaf81d76e266c52d84e2f/multiprocess-0.70.16-py312-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/38/e9/5f72929373e1a0e8d142a130f3f97e6ff920070f87f91c4e13e40e0fba5a/networkx-3.3-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/66/97/2b3655ccafca152a5bc8b07ccaa9ef935cc28c3f38431ce41ed10b2845d3/ngff_zarr-0.8.5-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/b2/a0/65139c6918afec12ccdfd36cfcf40be1115397dfb861dae64854f9de0e4e/ngff_zarr-0.8.7-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/85/dd/c89fd8966b69ab4d6c6bd7496fb18bdf920f23dd9bcaec8c7ecce9871d0b/numcodecs-0.13.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/2c/f3/61eeef119beb37decb58e7cb29940f19a1464b8608f2cab8a8616aba75fd/numpy-2.0.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/33/55/af02708f230eb77084a299d7b08175cff006dea4f2721074b92cdb0296c0/ordered_set-4.1.0-py3-none-any.whl
@@ -278,7 +278,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/4a/68/66fceb758ad7a88993940dbdf3ac59911ba9dc46d7798bf6c8652f89f853/multidict-6.0.5-cp312-cp312-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/0a/7d/a988f258104dcd2ccf1ed40fdc97e26c4ac351eeaf81d76e266c52d84e2f/multiprocess-0.70.16-py312-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/38/e9/5f72929373e1a0e8d142a130f3f97e6ff920070f87f91c4e13e40e0fba5a/networkx-3.3-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/66/97/2b3655ccafca152a5bc8b07ccaa9ef935cc28c3f38431ce41ed10b2845d3/ngff_zarr-0.8.5-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/b2/a0/65139c6918afec12ccdfd36cfcf40be1115397dfb861dae64854f9de0e4e/ngff_zarr-0.8.7-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/f3/b2/2fbf5c79e3df7344f3bcf711f2237f1bc70f0bc49826990023847c718050/numcodecs-0.13.0-cp312-cp312-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/8c/bf/d9d214a9dff020ad1663f1536f45d34e052e4c7f630c46cd363e785e3231/numpy-2.1.0-cp312-cp312-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/33/55/af02708f230eb77084a299d7b08175cff006dea4f2721074b92cdb0296c0/ordered_set-4.1.0-py3-none-any.whl
@@ -466,7 +466,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/24/1f/af976383b0b772dd351210af5b60ff9927e3abb2f4a103e93da19a957da0/multidict-6.0.5-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/0a/7d/a988f258104dcd2ccf1ed40fdc97e26c4ac351eeaf81d76e266c52d84e2f/multiprocess-0.70.16-py312-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/38/e9/5f72929373e1a0e8d142a130f3f97e6ff920070f87f91c4e13e40e0fba5a/networkx-3.3-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/66/97/2b3655ccafca152a5bc8b07ccaa9ef935cc28c3f38431ce41ed10b2845d3/ngff_zarr-0.8.5-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/b2/a0/65139c6918afec12ccdfd36cfcf40be1115397dfb861dae64854f9de0e4e/ngff_zarr-0.8.7-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/85/dd/c89fd8966b69ab4d6c6bd7496fb18bdf920f23dd9bcaec8c7ecce9871d0b/numcodecs-0.13.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/2c/f3/61eeef119beb37decb58e7cb29940f19a1464b8608f2cab8a8616aba75fd/numpy-2.0.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/33/55/af02708f230eb77084a299d7b08175cff006dea4f2721074b92cdb0296c0/ordered_set-4.1.0-py3-none-any.whl
@@ -647,7 +647,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/4a/68/66fceb758ad7a88993940dbdf3ac59911ba9dc46d7798bf6c8652f89f853/multidict-6.0.5-cp312-cp312-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/0a/7d/a988f258104dcd2ccf1ed40fdc97e26c4ac351eeaf81d76e266c52d84e2f/multiprocess-0.70.16-py312-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/38/e9/5f72929373e1a0e8d142a130f3f97e6ff920070f87f91c4e13e40e0fba5a/networkx-3.3-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/66/97/2b3655ccafca152a5bc8b07ccaa9ef935cc28c3f38431ce41ed10b2845d3/ngff_zarr-0.8.5-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/b2/a0/65139c6918afec12ccdfd36cfcf40be1115397dfb861dae64854f9de0e4e/ngff_zarr-0.8.7-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/f3/b2/2fbf5c79e3df7344f3bcf711f2237f1bc70f0bc49826990023847c718050/numcodecs-0.13.0-cp312-cp312-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/8c/bf/d9d214a9dff020ad1663f1536f45d34e052e4c7f630c46cd363e785e3231/numpy-2.1.0-cp312-cp312-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/33/55/af02708f230eb77084a299d7b08175cff006dea4f2721074b92cdb0296c0/ordered_set-4.1.0-py3-none-any.whl
@@ -2507,6 +2507,31 @@ packages:
   - importlib-resources>=1.4.0 ; python_version < '3.9'
   - referencing>=0.31.0
   requires_python: '>=3.8'
+- kind: pypi
+  name: knee-sarg
+  version: 1.0.0
+  path: .
+  sha256: af4b0caf6029ef5bbb6e3dd8382fdddd7db389c11e9cb2c8f3db734535c4b31c
+  requires_dist:
+  - dagster-dbt==0.23.16
+  - dagster-duckdb-polars==0.23.16
+  - dagster-duckdb
+  - dagster==1.7.16
+  - datasets
+  - dbt-core
+  - dbt-duckdb
+  - duckdb==1.0.0
+  - huggingface-hub
+  - httpx[http2]
+  - pyarrow
+  - python-slugify
+  - tenacity
+  - itk>=5.4.0,<6
+  - ngff-zarr[itk,dask-image]>=0.8.7,<0.9
+  - dagster-webserver==1.7.16 ; extra == 'dev'
+  - ruff ; extra == 'dev'
+  requires_python: '>=3.11,<=3.13'
+  editable: true
 - kind: conda
   name: ld_impl_linux-64
   version: '2.40'
@@ -2778,31 +2803,6 @@ packages:
   - pytest>4.0 ; extra == 'test'
   - pyzmq ; extra == 'zmq'
 - kind: pypi
-  name: knee-sarg
-  version: 1.0.0
-  path: .
-  sha256: 6c4459849de5a17fccba6b7e5f4e2f55f096207b0755e7d459ac6183bc739e58
-  requires_dist:
-  - dagster-dbt==0.23.16
-  - dagster-duckdb-polars==0.23.16
-  - dagster-duckdb
-  - dagster==1.7.16
-  - datasets
-  - dbt-core
-  - dbt-duckdb
-  - duckdb==1.0.0
-  - huggingface-hub
-  - httpx[http2]
-  - pyarrow
-  - python-slugify
-  - tenacity
-  - itk>=5.4.0,<6
-  - ngff-zarr[itk,dask-image]>=0.8.5,<0.9
-  - dagster-webserver==1.7.16 ; extra == 'dev'
-  - ruff ; extra == 'dev'
-  requires_python: '>=3.11,<=3.13'
-  editable: true
-- kind: pypi
   name: mako
   version: 1.3.5
   url: https://files.pythonhosted.org/packages/03/62/70f5a0c2dd208f9f3f2f9afd103aec42ee4d9ad2401d78342f75e9b8da36/Mako-1.3.5-py3-none-any.whl
@@ -2966,9 +2966,9 @@ packages:
   requires_python: '>=3.10'
 - kind: pypi
   name: ngff-zarr
-  version: 0.8.5
-  url: https://files.pythonhosted.org/packages/66/97/2b3655ccafca152a5bc8b07ccaa9ef935cc28c3f38431ce41ed10b2845d3/ngff_zarr-0.8.5-py3-none-any.whl
-  sha256: ea62fa70aa0dc999c0ed4564d0466f340d3ad4ba41a87dbbc53e219c147b2399
+  version: 0.8.7
+  url: https://files.pythonhosted.org/packages/b2/a0/65139c6918afec12ccdfd36cfcf40be1115397dfb861dae64854f9de0e4e/ngff_zarr-0.8.7-py3-none-any.whl
+  sha256: c864f69300bb549a6ddc0092803fc2f69672a5b5d10518bea5d17c5004d1ae69
   requires_dist:
   - dask[array]
   - itkwasm-downsample>=1.2.0
