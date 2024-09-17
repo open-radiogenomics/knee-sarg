@@ -1,9 +1,27 @@
 import os
 
-from dagster import define_asset_job, sensor, RunRequest, RunConfig, DefaultSensorStatus
+from dagster import (
+    define_asset_job,
+    sensor,
+    RunRequest,
+    RunConfig,
+    DefaultSensorStatus,
+)
 
 from .assets import ingested_study
+from .assets.oai import oai_samples, oai_patient_ids
 from .resources import STAGED_DIR
+
+
+stage_oai_samples_job = define_asset_job(
+    "stage_oai_samples",
+    [
+        oai_patient_ids,
+        oai_samples,
+    ],
+    description="Stages OAI samples",
+)
+
 
 ingest_and_analyze_study_job = define_asset_job(
     "ingest_and_analyze_study",

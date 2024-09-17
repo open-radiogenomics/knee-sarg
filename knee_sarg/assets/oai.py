@@ -24,27 +24,56 @@ from ..resources import (
 
 log = get_dagster_logger()
 
-patient_id_partitions_def = DynamicPartitionsDefinition(name="patient_id")
 series_id_partitions_def = DynamicPartitionsDefinition(name="series_id")
 
 
-@asset(
-    partitions_def=patient_id_partitions_def,
-    metadata={"partition_expr": "patient_id"},
-)
+class OaiPatientIds(Config):
+    patient_id_file: str = Field(
+        default_factory=lambda: "patient_small.json",
+        description="JSON file with array of patient IDs",
+    )
+
+
+@asset()
+def oai_patient_ids(
+    oai_sampler: OAISampler,
+    config: OaiPatientIds,
+) -> pl.DataFrame:
+    """
+    OAI Patient IDs.
+    """
+    ids = oai_sampler.get_patient_ids(config.patient_id_file)
+
+    return pl.from_pandas(
+        pd.DataFrame(
+            [
+                {
+                    "patient_id": patient_id,
+                }
+                for patient_id in ids
+            ]
+        ).astype(
+            {
+                "patient_id": "str",
+            }
+        )
+    )
+
+
+@asset()
 def oai_samples(
-    context: AssetExecutionContext, oai_sampler: OAISampler
+    oai_sampler: OAISampler,
+    oai_patient_ids: pl.DataFrame,
 ) -> pl.DataFrame:
     """
     OAI Samples. Samples are placed in data/staged/oai/dagster/.
     """
-    patient_id = context.partition_key
-    series = oai_sampler.get_samples(patient_id)
-
-    series_ids = series["series_id"].unique().to_list()
-    context.instance.add_dynamic_partitions(series_id_partitions_def.name, series_ids)
-
-    return series
+    patient_ids = oai_patient_ids["patient_id"]
+    all_series = pd.concat(
+        [oai_sampler.get_samples(patient_id) for patient_id in patient_ids],
+        ignore_index=True,
+    )
+    return pl.from_pandas(all_series)
 
 
 class ThicknessImages(Config):

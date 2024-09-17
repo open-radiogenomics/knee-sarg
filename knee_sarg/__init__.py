@@ -1,4 +1,8 @@
-from dagster import EnvVar, Definitions, load_assets_from_modules, define_asset_job
+from dagster import (
+    EnvVar,
+    Definitions,
+    load_assets_from_modules,
+)
 
 # from dagster_dbt import DbtCliResource, load_assets_from_dbt_project
 from dagster_duckdb_polars import DuckDBPolarsIOManager
@@ -14,7 +18,11 @@ from .resources import (
     OAISampler,
     OaiPipeline,
 )
-from .sensors import staged_study_sensor, ingest_and_analyze_study_job
+from .sensors import (
+    staged_study_sensor,
+    ingest_and_analyze_study_job,
+    stage_oai_samples_job,
+)
 
 # dbt = DbtCliResource(project_dir=DBT_PROJECT_DIR, profiles_dir=DBT_PROJECT_DIR)
 duckdb_resource = DuckDBResource(database=DATABASE_PATH)
@@ -23,16 +31,11 @@ duckdb_resource = DuckDBResource(database=DATABASE_PATH)
 dbt_assets = []
 all_assets = load_assets_from_modules([oai, huggingface, ingested_study])
 
-stage_oai_samples_job = define_asset_job(
-    "stage_oai_samples",
-    [
-        oai.oai_samples,
-    ],
-    description="Stages OAI samples",
-)
 
-
-jobs = [stage_oai_samples_job, ingest_and_analyze_study_job]
+jobs = [
+    stage_oai_samples_job,
+    ingest_and_analyze_study_job,
+]
 
 
 resources = {

@@ -1,8 +1,9 @@
 import os
 import tempfile
-from typing import Optional, List, Any
+from typing import Dict, Optional, List, Any
 from pathlib import Path
 import shutil
+import json
 
 import yaml
 import polars as pl
@@ -35,7 +36,7 @@ OAI_COLLECTION_NAME = "oai"
 
 collection_table_names = {"patients", "studies", "series"}
 
-SeriesInfo = dict[str, Any]
+SeriesInfo = Dict[str, Any]
 
 
 class CollectionTables(ConfigurableResource):
@@ -61,7 +62,7 @@ class CollectionTables(ConfigurableResource):
                     else:
                         if table == "patients":
                             conn.execute(
-                                f"CREATE TABLE IF NOT EXISTS {table_name} (patient_id VARCHAR, patient_affiliation VARCHAR, age_at_histological_diagnosis BIGINT, weight_lbs VARCHAR, gender VARCHAR, ethnicity VARCHAR, smoking_status VARCHAR, pack_years VARCHAR, quit_smoking_year BIGINT, percentgg VARCHAR, tumor_location_choice_rul VARCHAR, tumor_location_choice_rml VARCHAR, tumor_location_choice_rll VARCHAR, tumor_location_choice_lul VARCHAR, tumor_location_choice_lll VARCHAR, tumor_location_choice_l_lingula VARCHAR, tumor_location_choice_unknown VARCHAR, histology VARCHAR, pathological_t_stage VARCHAR, pathological_n_stage VARCHAR, pathological_m_stage VARCHAR, histopathological_grade VARCHAR, lymphovascular_invasion VARCHAR, pleural_invasion_elastic_visceral_or_parietal VARCHAR, egfr_mutation_status VARCHAR, kras_mutation_status VARCHAR, alk_translocation_status VARCHAR, adjuvant_treatment VARCHAR, chemotherapy VARCHAR, radiation VARCHAR, recurrence VARCHAR, recurrence_location VARCHAR, date_of_recurrence DATE, date_of_last_known_alive DATE, survival_status VARCHAR, date_of_death DATE, time_to_death_days BIGINT, ct_date DATE, days_between_ct_and_surgery BIGINT, pet_date DATE);"
+                                f"CREATE TABLE IF NOT EXISTS {table_name} (patient_id VARCHAR, gender VARCHAR, ethnicity VARCHAR, race VARCHAR);"
                             )
                         elif table == "studies":
                             conn.execute(
@@ -105,23 +106,31 @@ class OAISampler(ConfigurableResource):
     # directory with OAI data as provided by the OAI
     oai_data_root: str
 
-    # patient ids: "9000798", "9007827", "9016304"
-    def get_samples(self, patient_id: str) -> pl.DataFrame:
+    def get_time_point_folders(self) -> Dict[int, str]:
         # months
         # time_points = [0, 12, 18, 24, 30, 36, 48, 72, 96]
         # Most did not have time point 30
         time_points = [0, 12, 18, 24, 36, 48, 72, 96]
-        time_point_folders = [
-            "OAIBaselineImages",
-        ] + [f"OAI{m}MonthImages" for m in time_points[1:]]
-        # time_point_patients = { tp: set() for tp in time_points }
+        time_point_folders = {
+            **{0: "OAIBaselineImages"},
+            **{m: f"OAI{m}MonthImages" for m in time_points[1:]},
+        }
+        return time_point_folders
 
+    def get_patient_ids(self, target_patient_file: str) -> List[str]:
+        with open(DATA_DIR / "oai-sampler" / target_patient_file, "r") as fp:
+            target_patients = json.load(fp)
+        return target_patients
+
+    # patient ids: "9000798", "9007827", "9016304"
+    def get_samples(self, patient_id: str) -> pd.DataFrame:
         dess_file = DATA_DIR / "oai-sampler" / "SEG_3D_DESS_all.csv"
         dess_df = pd.read_csv(dess_file)
 
-        patients_file_path = (
-            Path(self.oai_data_root) / "OAIBaselineImages" / "enrollee01.txt"
-        )
+        time_point_folders = self.get_time_point_folders()
+
+        first_folder = list(time_point_folders.values())[0]
+        patients_file_path = Path(self.oai_data_root) / first_folder / "enrollee01.txt"
         patients_table = csv.read_csv(
             patients_file_path,
             parse_options=csv.ParseOptions(delimiter="\t"),
@@ -135,9 +144,9 @@ class OAISampler(ConfigurableResource):
         patients_df = patients_df.iloc[:, column_ids_to_include]
         patients_df.columns = columns_to_include
 
-        for time_point in [f"OAI{m}MonthImages" for m in time_points[1:]]:
+        for time_point_folder in list(time_point_folders.values())[1:]:
             patients_file_path = (
-                Path(self.oai_data_root) / time_point / "enrollee01.txt"
+                Path(self.oai_data_root) / time_point_folder / "enrollee01.txt"
             )
             patients_table = csv.read_csv(
                 patients_file_path,
@@ -165,16 +174,10 @@ class OAISampler(ConfigurableResource):
             }
         )
 
-        for time_point_index, time_point in enumerate(time_points):
-            folder = (
-                Path(self.oai_data_root)
-                / Path(time_point_folders[time_point_index])
-                / "results"
-            )
-
-            for study in folder.iterdir():
-                if not study.is_dir():
-                    continue  # skip over zip files
+        for time_point_folder in time_point_folders.values():
+            folder = Path(self.oai_data_root) / Path(time_point_folder) / "results"
+            # filter out zip files
+            for study in [study for study in folder.iterdir() if study.is_dir()]:
                 for patient_dir in study.iterdir():
                     if patient_dir.match(patient_id):
                         acquisition_id = patient_dir.relative_to(folder)
@@ -190,7 +193,6 @@ class OAISampler(ConfigurableResource):
                                 "study_instance_uid",
                                 "study_date",
                                 "study_description",
-                                "month",
                             ]
                         )
                         studies_table.astype(
@@ -199,7 +201,6 @@ class OAISampler(ConfigurableResource):
                                 "study_instance_uid": "string",
                                 "study_date": "string",
                                 "study_description": "string",
-                                "month": "int32",
                             }
                         )
 
@@ -212,7 +213,6 @@ class OAISampler(ConfigurableResource):
                                 "modality",
                                 "body_part_examined",
                                 "series_description",
-                                "month",
                             ]
                         )
                         series_table.astype(
@@ -224,7 +224,6 @@ class OAISampler(ConfigurableResource):
                                 "modality": "string",
                                 "body_part_examined": "string",
                                 "series_description": "string",
-                                "month": "int32",
                             }
                         )
 
@@ -270,7 +269,6 @@ class OAISampler(ConfigurableResource):
                                 "study_instance_uid": study_instance_uid,
                                 "study_date": study_date,
                                 "study_description": study_description,
-                                "month": time_point,
                             }
                             series_table.loc[len(series_table)] = {
                                 "patient_id": patient_id,
@@ -280,7 +278,6 @@ class OAISampler(ConfigurableResource):
                                 "modality": modality,
                                 "body_part_examined": body_part_examined,
                                 "series_description": series_description,
-                                "month": time_point,
                             }
 
                             staged_study_path = (
@@ -301,9 +298,7 @@ class OAISampler(ConfigurableResource):
                             row = patients_df.loc[
                                 patients_df["patient_id"] == int(patient_id)
                             ].iloc[0]
-                            row["month"] = time_point
                             row["patient_id"] = patient_id
-                            row["series_id"] = series_instance_uid
 
                             result.loc[len(result)] = row
 
@@ -322,10 +317,7 @@ class OAISampler(ConfigurableResource):
                             os.makedirs(nifti_path, exist_ok=True)
                             itk.imwrite(image, nifti_path / "image.nii.gz")
 
-        pl_df = pl.from_pandas(result)
-        print("result")
-        print(pl_df)
-        return pl_df
+        return result
 
 
 def make_output_dir(collection: str, series_info: SeriesInfo):
