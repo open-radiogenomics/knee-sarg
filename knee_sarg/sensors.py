@@ -5,17 +5,17 @@ from dagster import define_asset_job, sensor, RunRequest, RunConfig, DefaultSens
 from .assets import ingested_study
 from .resources import STAGED_DIR
 
-injest_and_analyze_study_job = define_asset_job(
-    "injest_and_analyze_study",
+ingest_and_analyze_study_job = define_asset_job(
+    "ingest_and_analyze_study",
     [
         ingested_study.ingested_study,
         # more analysis assets here
     ],
-    description="Injest a study into a collection and run analysis on it",
+    description="Ingest a study into a collection and run analysis on it",
 )
 
 
-@sensor(job=injest_and_analyze_study_job, default_status=DefaultSensorStatus.STOPPED)
+@sensor(job=ingest_and_analyze_study_job, default_status=DefaultSensorStatus.STOPPED)
 def staged_study_sensor(context):
     """
     Sensor that triggers when a study is staged.

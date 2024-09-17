@@ -1,7 +1,6 @@
 import os
-import json
 import tempfile
-from typing import Optional, List
+from typing import Optional, List, Any
 from pathlib import Path
 import shutil
 
@@ -35,6 +34,8 @@ DATABASE_PATH = os.getenv("DATABASE_PATH", str(DATA_DIR / "database.duckdb"))
 OAI_COLLECTION_NAME = "oai"
 
 collection_table_names = {"patients", "studies", "series"}
+
+SeriesInfo = dict[str, Any]
 
 
 class CollectionTables(ConfigurableResource):
@@ -103,9 +104,9 @@ class CollectionTables(ConfigurableResource):
 class OAISampler(ConfigurableResource):
     # directory with OAI data as provided by the OAI
     oai_data_root: str
-    n_samples: int = 2
 
-    def get_samples(self) -> pl.DataFrame:
+    # patient ids: "9000798", "9007827", "9016304"
+    def get_samples(self, patient_id: str) -> pl.DataFrame:
         # months
         # time_points = [0, 12, 18, 24, 30, 36, 48, 72, 96]
         # Most did not have time point 30
@@ -114,13 +115,6 @@ class OAISampler(ConfigurableResource):
             "OAIBaselineImages",
         ] + [f"OAI{m}MonthImages" for m in time_points[1:]]
         # time_point_patients = { tp: set() for tp in time_points }
-
-        # target_patients = [9279291, 9298954, 9003380]
-        with open(
-            DATA_DIR / "oai-sampler" / "patients_with_8_time_points.json", "r"
-        ) as fp:
-            target_patients = json.load(fp)
-        target_patients = target_patients[: self.n_samples]
 
         dess_file = DATA_DIR / "oai-sampler" / "SEG_3D_DESS_all.csv"
         dess_df = pd.read_csv(dess_file)
@@ -159,16 +153,11 @@ class OAISampler(ConfigurableResource):
 
             patients_df = pd.concat([patients_df, patients_df_tp])
 
-        # print(patients_df)
-        result = pd.DataFrame(
-            columns=columns_to_include
-            + [
-                "month",
-            ]
-        )
+        result = pd.DataFrame(columns=[*columns_to_include, "month", "series_id"])
         result = result.astype(
             {
                 "patient_id": "string",
+                "series_id": "string",
                 "gender": "string",
                 "ethnicity": "string",
                 "race": "string",
@@ -176,174 +165,162 @@ class OAISampler(ConfigurableResource):
             }
         )
 
-        for patient in target_patients:
-            for time_point_index, time_point in enumerate(time_points):
-                folder = (
-                    Path(self.oai_data_root)
-                    / Path(time_point_folders[time_point_index])
-                    / "results"
-                )
+        for time_point_index, time_point in enumerate(time_points):
+            folder = (
+                Path(self.oai_data_root)
+                / Path(time_point_folders[time_point_index])
+                / "results"
+            )
 
-                for study in folder.iterdir():
-                    if study.is_dir():
-                        for patient_dir in study.iterdir():
-                            if patient_dir.match(str(patient)):
-                                acquisition_id = patient_dir.relative_to(folder)
-                                acquisition_dess = dess_df["Folder"].str.contains(
-                                    str(acquisition_id)
-                                )
-                                acquisition_df = dess_df.loc[acquisition_dess, :]
-                                patient_id = str(patient)
-                                log.info(f"Fetching images for patient {patient_id}")
+            for study in folder.iterdir():
+                if not study.is_dir():
+                    continue  # skip over zip files
+                for patient_dir in study.iterdir():
+                    if patient_dir.match(patient_id):
+                        acquisition_id = patient_dir.relative_to(folder)
+                        acquisition_dess = dess_df["Folder"].str.contains(
+                            str(acquisition_id)
+                        )
+                        acquisition_df = dess_df.loc[acquisition_dess, :]
+                        log.info(f"Fetching images for patient {patient_id}")
 
-                                studies_table = pd.DataFrame(
-                                    columns=[
-                                        "patient_id",
-                                        "study_instance_uid",
-                                        "study_date",
-                                        "study_description",
-                                        "month",
-                                    ]
-                                )
-                                studies_table.astype(
-                                    {
-                                        "patient_id": "string",
-                                        "study_instance_uid": "string",
-                                        "study_date": "string",
-                                        "study_description": "string",
-                                        "month": "int32",
-                                    }
-                                )
+                        studies_table = pd.DataFrame(
+                            columns=[
+                                "patient_id",
+                                "study_instance_uid",
+                                "study_date",
+                                "study_description",
+                                "month",
+                            ]
+                        )
+                        studies_table.astype(
+                            {
+                                "patient_id": "string",
+                                "study_instance_uid": "string",
+                                "study_date": "string",
+                                "study_description": "string",
+                                "month": "int32",
+                            }
+                        )
 
-                                series_table = pd.DataFrame(
-                                    columns=[
-                                        "patient_id",
-                                        "study_instance_uid",
-                                        "series_instance_uid",
-                                        "series_number",
-                                        "modality",
-                                        "body_part_examined",
-                                        "series_description",
-                                        "month",
-                                    ]
-                                )
-                                series_table.astype(
-                                    {
-                                        "patient_id": "string",
-                                        "study_instance_uid": "string",
-                                        "series_instance_uid": "string",
-                                        "series_number": "int32",
-                                        "modality": "string",
-                                        "body_part_examined": "string",
-                                        "series_description": "string",
-                                        "month": "int32",
-                                    }
-                                )
+                        series_table = pd.DataFrame(
+                            columns=[
+                                "patient_id",
+                                "study_instance_uid",
+                                "series_instance_uid",
+                                "series_number",
+                                "modality",
+                                "body_part_examined",
+                                "series_description",
+                                "month",
+                            ]
+                        )
+                        series_table.astype(
+                            {
+                                "patient_id": "string",
+                                "study_instance_uid": "string",
+                                "series_instance_uid": "string",
+                                "series_number": "int32",
+                                "modality": "string",
+                                "body_part_examined": "string",
+                                "series_description": "string",
+                                "month": "int32",
+                            }
+                        )
 
-                                for _, descr in acquisition_df.iterrows():
-                                    # is_left = descr['SeriesDescription'].find('LEFT') > -1
-                                    vol_folder = folder / descr["Folder"]
-                                    if not vol_folder.exists():
-                                        continue
-                                    frame_0 = itk.imread(
-                                        vol_folder / os.listdir(vol_folder)[0]
-                                    )
-                                    meta = dict(frame_0)
-                                    image = itk.imread(str(vol_folder))
+                        for _, descr in acquisition_df.iterrows():
+                            # is_left = descr['SeriesDescription'].find('LEFT') > -1
+                            vol_folder = folder / descr["Folder"]
+                            if not vol_folder.exists():
+                                continue
+                            frame_0 = itk.imread(vol_folder / os.listdir(vol_folder)[0])
+                            meta = dict(frame_0)
+                            image = itk.imread(str(vol_folder))
 
-                                    study_instance_uid = meta["0020|000d"]
-                                    series_instance_uid = meta["0020|000e"]
-                                    log.info(
-                                        f"Study Instance UID: {study_instance_uid}"
-                                    )
-                                    log.info(
-                                        f"Series Instance UID: {series_instance_uid}"
-                                    )
+                            study_instance_uid = meta["0020|000d"]
+                            series_instance_uid = meta["0020|000e"]
+                            log.info(f"Study Instance UID: {study_instance_uid}")
+                            log.info(f"Series Instance UID: {series_instance_uid}")
 
-                                    output_dir = (
-                                        STAGED_DIR
-                                        / "oai"
-                                        / "dagster"
-                                        / str(patient_id)
-                                        / str(study_instance_uid)
-                                    )
-                                    os.makedirs(output_dir, exist_ok=True)
+                            output_dir = (
+                                STAGED_DIR
+                                / "oai"
+                                / "dagster"
+                                / str(patient_id)
+                                / str(study_instance_uid)
+                            )
+                            os.makedirs(output_dir, exist_ok=True)
 
-                                    study_date = meta.get("0008|0020", "00000000")
-                                    study_date = f"{study_date[4:6]}-{study_date[6:8]}-{study_date[:4]}"
-                                    study_description = meta.get("0008|1030", "")
-                                    series_number = meta.get("0020|0011", "0")
-                                    series_number = int(series_number)
-                                    modality = meta.get("0008|0060", "").strip()
-                                    body_part_examined = meta.get("0018|0015", "")
-                                    series_description = meta.get("0008|103e", "")
-                                    log.info(
-                                        f"{study_date} {study_description} {series_number} {modality} {body_part_examined} {series_description}"
-                                    )
+                            study_date = meta.get("0008|0020", "00000000")
+                            study_date = (
+                                f"{study_date[4:6]}-{study_date[6:8]}-{study_date[:4]}"
+                            )
+                            study_description = meta.get("0008|1030", "")
+                            series_number = meta.get("0020|0011", "0")
+                            series_number = int(series_number)
+                            modality = meta.get("0008|0060", "").strip()
+                            body_part_examined = meta.get("0018|0015", "")
+                            series_description = meta.get("0008|103e", "")
+                            log.info(
+                                f"{study_date} {study_description} {series_number} {modality} {body_part_examined} {series_description}"
+                            )
 
-                                    studies_table.loc[len(studies_table)] = {
-                                        "patient_id": patient_id,
-                                        "study_instance_uid": study_instance_uid,
-                                        "study_date": study_date,
-                                        "study_description": study_description,
-                                        "month": time_point,
-                                    }
-                                    series_table.loc[len(series_table)] = {
-                                        "patient_id": patient_id,
-                                        "study_instance_uid": study_instance_uid,
-                                        "series_instance_uid": series_instance_uid,
-                                        "series_number": series_number,
-                                        "modality": modality,
-                                        "body_part_examined": body_part_examined,
-                                        "series_description": series_description,
-                                        "month": time_point,
-                                    }
+                            studies_table.loc[len(studies_table)] = {
+                                "patient_id": patient_id,
+                                "study_instance_uid": study_instance_uid,
+                                "study_date": study_date,
+                                "study_description": study_description,
+                                "month": time_point,
+                            }
+                            series_table.loc[len(series_table)] = {
+                                "patient_id": patient_id,
+                                "study_instance_uid": study_instance_uid,
+                                "series_instance_uid": series_instance_uid,
+                                "series_number": series_number,
+                                "modality": modality,
+                                "body_part_examined": body_part_examined,
+                                "series_description": series_description,
+                                "month": time_point,
+                            }
 
-                                    staged_study_path = (
-                                        STAGED_DIR
-                                        / OAI_COLLECTION_NAME
-                                        / "dagster"
-                                        / patient_id
-                                        / study_instance_uid
-                                    )
+                            staged_study_path = (
+                                STAGED_DIR
+                                / OAI_COLLECTION_NAME
+                                / "dagster"
+                                / patient_id
+                                / study_instance_uid
+                            )
 
-                                    print(
-                                        "patients_df",
-                                        patients_df.loc[
-                                            patients_df["patient_id"] == int(patient)
-                                        ],
-                                    )
-                                    print(patients_df["patient_id"].head())
-                                    row = patients_df.loc[
-                                        patients_df["patient_id"] == int(patient)
-                                    ].iloc[0]
-                                    row["month"] = time_point
-                                    row["patient_id"] = str(patient_id)
+                            # print(
+                            #     "patients_df",
+                            #     patients_df.loc[
+                            #         patients_df["patient_id"] == int(patient)
+                            #     ],
+                            # )
+                            # print(patients_df["patient_id"].head())
+                            row = patients_df.loc[
+                                patients_df["patient_id"] == int(patient_id)
+                            ].iloc[0]
+                            row["month"] = time_point
+                            row["patient_id"] = patient_id
+                            row["series_id"] = series_instance_uid
 
-                                    result.loc[len(result)] = row
+                            result.loc[len(result)] = row
 
-                                    with open(
-                                        staged_study_path / "patient.json", "w"
-                                    ) as fp:
-                                        fp.write(pd.DataFrame({0: row}).to_json())
+                            with open(staged_study_path / "patient.json", "w") as fp:
+                                fp.write(pd.DataFrame({0: row}).to_json())
 
-                                    with open(
-                                        staged_study_path / "study.json", "w"
-                                    ) as fp:
-                                        fp.write(studies_table.to_json())
+                            with open(staged_study_path / "study.json", "w") as fp:
+                                fp.write(studies_table.to_json())
 
-                                    with open(
-                                        staged_study_path / "series.json", "w"
-                                    ) as fp:
-                                        fp.write(series_table.to_json())
+                            with open(staged_study_path / "series.json", "w") as fp:
+                                fp.write(series_table.to_json())
 
-                                    nifti_path = (
-                                        staged_study_path
-                                        / "nifti"
-                                        / series_instance_uid
-                                    )
-                                    os.makedirs(nifti_path, exist_ok=True)
-                                    itk.imwrite(image, nifti_path / "image.nii.gz")
+                            nifti_path = (
+                                staged_study_path / "nifti" / series_instance_uid
+                            )
+                            os.makedirs(nifti_path, exist_ok=True)
+                            itk.imwrite(image, nifti_path / "image.nii.gz")
 
         pl_df = pl.from_pandas(result)
         print("result")
@@ -351,38 +328,73 @@ class OAISampler(ConfigurableResource):
         return pl_df
 
 
+def make_output_dir(collection: str, series_info: SeriesInfo):
+    patient_id, study_id, series_id = (
+        series_info["patient_id"],
+        series_info["study_id"],
+        series_info["series_id"],
+    )
+    output_dir = COLLECTIONS_DIR / collection / patient_id / study_id / series_id
+    os.makedirs(output_dir, exist_ok=True)
+
+    for json_file in series_info["study_dir"].glob("*.json"):
+        shutil.copy(json_file, output_dir)
+
+    return output_dir
+
+
+point_to_tbb_in_user_space = "export LD_LIBRARY_PATH=$HOME/oneapi-tbb-2021.5.0/lib/intel64/gcc4.8:$LD_LIBRARY_PATH"
+
+
 class OaiPipeline(ConfigurableResource):
     ssh_connection: ResourceDependency[SSHResource]
     pipeline_src_dir: str
+    env_setup_command: str = ""
 
-    def run_pipeline(self, study_dir: Path, image_path: Path):
+    def run_pipeline(
+        self,
+        image_path: str,
+        output_dir: str,
+        run_id: str,
+    ):
         with self.ssh_connection.get_connection() as client:
-            remote_in_dir = f"{self.pipeline_src_dir}/in-data/"
-            remote_path = f"{remote_in_dir}{os.path.basename(image_path)}"
-            self.ssh_connection.sftp_put(remote_path, str(image_path))
+            temp_dir = f"{self.pipeline_src_dir}/temp/{run_id}"
+            remote_in_dir = f"{temp_dir}/in-data/"
+            stdin, stdout, stderr = client.exec_command(f"mkdir -p {remote_in_dir}")
+            remote_image_path = f"{remote_in_dir}/{os.path.basename(image_path)}"
+            self.ssh_connection.sftp_put(remote_image_path, image_path)
 
-            log.info("Running pipeline")
+            optional_env_setup = (
+                f"{self.env_setup_command} && " if self.env_setup_command else ""
+            )
+            remote_out_dir = f"{temp_dir}/oai_results"
+            run_call = f"python ./oai_analysis/pipeline_cli.py {remote_image_path} {remote_out_dir}"
+            log.info(f"Running pipeline: {run_call}")
             stdin, stdout, stderr = client.exec_command(
-                f"cd {self.pipeline_src_dir} && source ./venv/bin/activate && python ./oai_analysis/pipeline.py"
+                f"cd {self.pipeline_src_dir} && source ./venv/bin/activate && {optional_env_setup} {run_call}"
             )
             log.info(stdout.read().decode())
             if stderr_output := stderr.read().decode():
                 log.error(stderr_output)
 
-            output_dir = study_dir / "oai_output"
-            output_dir.mkdir(exist_ok=True)
-
-            remote_out_dir = f"{self.pipeline_src_dir}/OAI_results"
             stdin, stdout, stderr = client.exec_command(f"ls {remote_out_dir}")
             remote_files = [
                 file
                 for file in stdout.read().decode().splitlines()
                 if file != "in_image.nrrd"
             ]
+
+            os.makedirs(output_dir, exist_ok=True)
             for remote_file in remote_files:
                 self.ssh_connection.sftp_get(
-                    f"{remote_out_dir}/{remote_file}", str(output_dir / remote_file)
+                    f"{remote_out_dir}/{remote_file}",
+                    str(Path(output_dir) / remote_file),
                 )
+
+            stdin, stdout, stderr = client.exec_command(f"rm -rf {temp_dir}")
+            log.info(stdout.read().decode())
+            if stderr_output := stderr.read().decode():
+                log.error(stderr_output)
 
 
 class CollectionPublisher(ConfigurableResource):

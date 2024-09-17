@@ -1,62 +1,71 @@
 """NIH Imaging Data Commons (OAI) dataset assets."""
 
-import os
+from typing import List
 from pathlib import Path
 
 import polars as pl
-from dagster import asset, get_dagster_logger
+import pandas as pd
+from dagster import (
+    asset,
+    get_dagster_logger,
+    DynamicPartitionsDefinition,
+    AssetExecutionContext,
+    Config,
+)
+from pydantic import Field
 
-from ..resources import OAISampler, OAI_SAMPLED_DIR, OaiPipeline
+from ..resources import (
+    OAISampler,
+    OAI_SAMPLED_DIR,
+    OaiPipeline,
+    make_output_dir,
+    OAI_COLLECTION_NAME,
+)
 
 log = get_dagster_logger()
 
+patient_id_partitions_def = DynamicPartitionsDefinition(name="patient_id")
+series_id_partitions_def = DynamicPartitionsDefinition(name="series_id")
 
-@asset()
-def oai_samples(oai_sampler: OAISampler) -> pl.DataFrame:
+
+@asset(
+    partitions_def=patient_id_partitions_def,
+    metadata={"partition_expr": "patient_id"},
+)
+def oai_samples(
+    context: AssetExecutionContext, oai_sampler: OAISampler
+) -> pl.DataFrame:
     """
     OAI Samples. Samples are placed in data/staged/oai/dagster/.
     """
-    return oai_sampler.get_samples()
+    patient_id = context.partition_key
+    series = oai_sampler.get_samples(patient_id)
+
+    series_ids = series["series_id"].unique().to_list()
+    context.instance.add_dynamic_partitions(series_id_partitions_def.name, series_ids)
+
+    return series
 
 
-pipeline_src_dir = "/home/paulhax/src/OAI_analysis_2"
+class ThicknessImages(Config):
+    required_output_files: List[str] = Field(
+        default_factory=lambda: ["thickness_FC.png", "thickness_TC.png"],
+        description="List of required output files",
+    )
 
 
-def run_pipeline(ssh_resource, study_dir: Path, image_path: Path):
-    with ssh_resource.get_connection() as client:
-        remote_in_dir = f"{pipeline_src_dir}/in-data/"
-        remote_path = f"{remote_in_dir}{os.path.basename(image_path)}"
-        ssh_resource.sftp_put(remote_path, str(image_path))
-
-        log.info("Running pipeline")
-        stdin, stdout, stderr = client.exec_command(
-            f"cd {pipeline_src_dir} && source ./venv/bin/activate && python ./oai_analysis/pipeline.py"
-        )
-        log.info(stdout.read().decode())
-        if stderr_output := stderr.read().decode():
-            log.error(stderr_output)
-
-        output_dir = study_dir / "oai_output"
-        output_dir.mkdir(exist_ok=True)
-
-        remote_out_dir = f"{pipeline_src_dir}/OAI_results"
-        stdin, stdout, stderr = client.exec_command(f"ls {remote_out_dir}")
-        remote_files = [
-            file
-            for file in stdout.read().decode().splitlines()
-            if file != "in_image.nrrd"
-        ]
-        for remote_file in remote_files:
-            ssh_resource.sftp_get(
-                f"{remote_out_dir}/{remote_file}", str(output_dir / remote_file)
-            )
-
-
-@asset(deps=[oai_samples])
-def thickness_images(oai_pipeline: OaiPipeline) -> None:
+@asset(
+    partitions_def=series_id_partitions_def,
+    metadata={"partition_expr": "series_id"},
+    op_tags={"gpu": ""},
+)
+def thickness_images(
+    context: AssetExecutionContext, config: ThicknessImages, oai_pipeline: OaiPipeline
+) -> pl.DataFrame:
     """
-    Thickness Images. Generates thickness images and places them next to sampled images.
+    Thickness Images. Generates thickness image for a series in data/collections/OAI_COLLECTION_NAME/patient_id/study_id/series_id.
     """
+    series_id = context.partition_key
     # gather images we want to run the pipeline on
     staged_images_root: str = str(OAI_SAMPLED_DIR)
     patient_dirs = [d for d in Path(staged_images_root).iterdir() if d.is_dir()]
@@ -67,18 +76,68 @@ def thickness_images(oai_pipeline: OaiPipeline) -> None:
         if subdir.is_dir()
     ]
 
-    def get_first_image(study_dir: Path):
-        images_dir = study_dir / "nifti"
-        image_paths = [
-            image_path
-            for series_dir in images_dir.iterdir()
-            for image_path in series_dir.iterdir()
-        ]
-        return image_paths[0]
+    def get_first_file(series_dir: Path):
+        return str(
+            next((item for item in series_dir.iterdir() if not item.is_dir()), None)
+        )
 
-    study_and_image = [
-        (study_dir, get_first_image(study_dir)) for study_dir in study_dirs
+    series_dirs = [
+        {
+            "patient_id": study_dir.parent.name,
+            "study_id": study_dir.name,
+            "series_id": series_dir.name,
+            "study_dir": study_dir,
+            "series_dir": series_dir,
+            "image_path": get_first_file(series_dir),
+        }
+        for study_dir in study_dirs
+        for series_dir in (study_dir / "nifti").iterdir()
+        if series_dir.is_dir()
     ]
 
-    for study_dir, image_path in study_and_image:
-        oai_pipeline.run_pipeline(study_dir, image_path)
+    series = next(
+        (item for item in series_dirs if item["series_id"] == series_id), None
+    )
+    if not series:
+        raise Exception(
+            f"Series {series_id} not found in staging dir: {staged_images_root}"
+        )
+
+    output_dir = make_output_dir(OAI_COLLECTION_NAME, series)
+    computed_files_dir = output_dir / "cartilage_thickness"
+
+    # todo surface errors in remote compute and check output
+    oai_pipeline.run_pipeline(series["image_path"], str(computed_files_dir), series_id)
+
+    # Check if specific files are in computed_files_dir
+    expected_files = ["thickness_FC.png", "thickness_TC.png"]
+    missing_files = []
+    for file in expected_files:
+        file_path = computed_files_dir / file
+        if not file_path.exists():
+            missing_files.append(file)
+
+    if missing_files:
+        raise Exception(
+            f"The following files are missing in computed_files_dir: {missing_files}"
+        )
+
+    return pl.from_pandas(
+        pd.DataFrame(
+            [
+                {
+                    "patient_id": series["patient_id"],
+                    "study_id": series["study_id"],
+                    "series_id": series["series_id"],
+                    "computed_files_dir": str(computed_files_dir),
+                }
+            ]
+        ).astype(
+            {
+                "patient_id": "str",
+                "study_id": "str",
+                "series_id": "str",
+                "computed_files_dir": "str",
+            }
+        )
+    )

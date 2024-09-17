@@ -54,7 +54,7 @@ def ingested_study(
     config: StagedStudyConfig, collection_tables: CollectionTables
 ) -> pl.DataFrame:
     """
-    Injested study data.
+    Ingested study data.
     """
     staged_study_path = (
         STAGED_DIR
