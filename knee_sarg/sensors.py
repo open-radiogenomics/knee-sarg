@@ -1,21 +1,39 @@
 import os
-from pathlib import Path
 
-from dagster import define_asset_job, sensor, RunRequest, RunConfig, DefaultSensorStatus
-
-from .assets import injested_study
-from .resources import STAGED_DIR
-
-injest_and_analyze_study_job = define_asset_job(
-    "injest_and_analyze_study",
-    [
-        injested_study.injested_study,
-        # more analysis assets here
-    ],
-    description="Injest a study into a collection and run analysis on it",
+from dagster import (
+    define_asset_job,
+    sensor,
+    RunRequest,
+    RunConfig,
+    DefaultSensorStatus,
 )
 
-@sensor(job=injest_and_analyze_study_job, default_status=DefaultSensorStatus.STOPPED)
+from .assets import ingested_study
+from .assets.oai import oai_samples, oai_patient_ids
+from .resources import STAGED_DIR
+
+
+stage_oai_samples_job = define_asset_job(
+    "stage_oai_samples",
+    [
+        oai_patient_ids,
+        oai_samples,
+    ],
+    description="Stages OAI samples",
+)
+
+
+ingest_and_analyze_study_job = define_asset_job(
+    "ingest_and_analyze_study",
+    [
+        ingested_study.ingested_study,
+        # more analysis assets here
+    ],
+    description="Ingest a study into a collection and run analysis on it",
+)
+
+
+@sensor(job=ingest_and_analyze_study_job, default_status=DefaultSensorStatus.STOPPED)
 def staged_study_sensor(context):
     """
     Sensor that triggers when a study is staged.
@@ -32,6 +50,15 @@ def staged_study_sensor(context):
                     yield RunRequest(
                         run_key=f"{collection_name}-{uploader}-{patient_id}-{study_id}",
                         run_config=RunConfig(
-                            ops={"injested_study": {"config": {"collection_name": collection_name, "uploader": uploader, "study_id": study_id , "patient_id": patient_id}}}
+                            ops={
+                                "ingested_study": {
+                                    "config": {
+                                        "collection_name": collection_name,
+                                        "uploader": uploader,
+                                        "study_id": study_id,
+                                        "patient_id": patient_id,
+                                    }
+                                }
+                            }
                         ),
                     )
